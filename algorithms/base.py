@@ -1,6 +1,5 @@
 from sklearn.base import BaseEstimator
 import numpy as np
-from tqdm import tqdm
 class BaseLine(BaseEstimator):
     def __init__(self, lr=0.003, l2=0.02, epochs=100):
         """"
@@ -22,8 +21,9 @@ class BaseLine(BaseEstimator):
 
 
     def _get_K(self, D):
+        print('Creating Baseline K')
         K = {}
-        for userId, row in tqdm(D.iterrows()):
+        for userId, row in enumerate(D):
             for movieId, rating in enumerate(row):
                 if not np.isnan(rating):
                     K[(userId, movieId)] = rating
