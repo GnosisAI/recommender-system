@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from tqdm.auto import tqdm
 from numba import jit
-from optimized import _run_epoch
+from .optimized import _run_epoch_svdpp
 
 class SVDpp():
     """The *SVD++* algorithm, an extension of :class:`SVD` taking into account
@@ -46,7 +46,7 @@ class SVDpp():
         self.n_epochs = epochs
         self.lr = lr
         self.l2 = l2
-    
+
     def fit(self, D):
         self.D = D
         self.sgd(D)
@@ -82,9 +82,7 @@ class SVDpp():
         self._initialization()
         for current_epoch in range(self.n_epochs):
             print(" processing epoch {}".format(current_epoch))
-        # TODO add run epochs
-            for u, row in enumerate(D):
-                yj, bu, bi, pu, qi = _run_epoch(u, row, self.yj, self.bu, self.bi, self.pu, self.qi, self.lr, self.l2, self.n_factors, self.global_mean)
+            yj, bu, bi, pu, qi = _run_epoch_svdpp(D, self.yj, self.bu, self.bi, self.pu, self.qi, self.lr, self.l2, self.n_factors, self.global_mean)
         self.bu = bu
         self.bi = bi
         self.pu = pu
@@ -102,7 +100,6 @@ class SVDpp():
         Iu = 0.0001
         Iu += len(row[row != 0])  # nb of items rated by u
         u_impl_feedback = sum(self.yj[j] for (j, _) in enumerate(row / np.sqrt(Iu)))
-        
         rhat += np.dot(self.qi[i], self.pu[u] + u_impl_feedback)
 
         return rhat
@@ -114,7 +111,7 @@ if __name__ == "__main__":
     d = d.drop('Unnamed: 0', axis=1)
     d.columns = range(len(d.columns))
     d = d.fillna(0)
-    d = d.iloc[:100, :1000]
+    d = d.iloc[:, 2000]
     start = time()
     s = SVDpp(epochs=20)
     s.fit(d.values)
