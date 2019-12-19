@@ -35,10 +35,10 @@ class CorrelationBased(BaseEstimator):
             user_movies = self.D[userid]
             user_rated_movies = np.argwhere(user_movies != 0).flatten()
             #caluclating nijs
-            tmp = {}
+            tmp = {} # tmp is the true nij in the equation
             for movj in user_rated_movies:
                 tmp[movj] = self.calulate_nij(movid, movj)
-            nijs = {k: v/(v+self.l2) for k, v in tmp.items()}
+            nijs = {k: v/(v+self.l2) for k, v in tmp.items()}# nijs is the whole coef 
             # get the pij for rated movies
             pijs_rated_movies = self.sim_D[movid, user_rated_movies]
             # calculating sij
