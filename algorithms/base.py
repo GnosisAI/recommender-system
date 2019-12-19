@@ -1,5 +1,6 @@
 from sklearn.base import BaseEstimator
 import numpy as np
+from .optimized import _run_epoch_base, _get_K
 class BaseLine(BaseEstimator):
     def __init__(self, lr=0.003, l2=0.02, epochs=100):
         """"
@@ -20,31 +21,20 @@ class BaseLine(BaseEstimator):
         self.epochs = epochs
 
 
-    def _get_K(self, D):
-        print('Creating Baseline K')
-        K = {}
-        for userId, row in enumerate(D):
-            for movieId, rating in enumerate(row):
-                if not np.isnan(rating):
-                    K[(userId, movieId)] = rating
-        return K
+
 
     def fit(self, D):
-        self.D_ = D
-        self.K = self._get_K(self.D_)
+        self.D = D
+        self.K = _get_K(D)
 
-        self.mu = self.D_.mean().mean()
+        self.mu = self.D.mean()
         self.bi = np.zeros((D.shape[1],))
         self.bu = np.zeros((D.shape[0],))
         # train
+        print('start SGD')
         for i in range(self.epochs):
-            for k, r in self.K.items():
-                uid, movid = k
-                delta = 2 * (r - self.mu - self.bu[uid]) + 2 * self.l2 * self.bu[uid]
-                self.bu[uid] += self.lr * delta
-
-                delta = 2 * (r - self.mu - self.bi[movid]) + 2 * self.l2 * self.bi[movid]
-                self.bi[movid] += self.lr * delta
+            print(f"epoch {i}")
+            _run_epoch_base(self.K, self.mu, self.bu, self.bi, self.lr, self.l2)
         return self
 
     def predict(self, uid, movid): # TODO support of arrays

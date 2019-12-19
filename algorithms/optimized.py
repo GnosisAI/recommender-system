@@ -2,7 +2,7 @@ import numpy as np
 from numba import jit
 import warnings
 @jit(nopython=True)
-def _run_epoch(u, row, yj, bu, bi, pu, qi, lr ,l2, n_factors, global_mean):
+def _run_epoch_svdpp(u, row, yj, bu, bi, pu, qi, lr ,l2, n_factors, global_mean):
     for i, r in enumerate(row):
         # items rated by u. This is COSTLY
         Iu = np.nonzero(row != 0)[0]
@@ -37,3 +37,24 @@ def _run_epoch(u, row, yj, bu, bi, pu, qi, lr ,l2, n_factors, global_mean):
                 yj[j, f] += lr * (err * qif / sqrt_Iu - l2 * yj[j, f])
 
     return  yj, bu, bi, pu, qi
+
+
+@jit(nopython=True)
+def _run_epoch_base(K, mu, bu, bi, lr, l2):
+    for k, r in K.items():
+                uid, movid = k
+                delta = 2 * (r - mu - bu[uid]) + 2 * l2 * bu[uid]
+                bu[uid] += lr * delta
+
+                delta = 2 * (r - mu - bi[movid]) + 2 * l2 * bi[movid]
+                bi[movid] += lr * delta
+
+@jit(nopython=True)
+def _get_K(D):
+    K = {}
+    for userId in range(D.shape[0]):
+        row = D[userId, :]
+        for movieId, rating in enumerate(row):
+            if not np.isnan(rating):
+                K[(userId, movieId)] = rating
+    return K
