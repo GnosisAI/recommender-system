@@ -1,6 +1,6 @@
 from sklearn.base import BaseEstimator
 import numpy as np
-from  optimized import _get_K, _run_epochs_implicite
+from .optimized import _get_K, _run_epochs_implicite
 from tqdm.auto import tqdm
 
 class CorrelationBasedImplicit(BaseEstimator):
