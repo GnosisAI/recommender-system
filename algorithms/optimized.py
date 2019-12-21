@@ -60,3 +60,37 @@ def _get_K(D):
             if not np.isnan(rating):
                 K[(userId, movieId)] = rating
     return K
+
+@jit(nopython=True)
+def _run_epochs_implicite(epochs, D, global_mean, seen, bu, bi, wij, cij, lr, l4, N):
+    K = _get_K(D)
+    for epoch in range(epochs):
+        print(epoch)
+        for k, r in K.items():
+            u, i = k
+
+            bui = global_mean + bu[u] + bi[i]
+
+            # get R(u) and S(u)
+            Nu = seen[u].argsort()[-N:][::-1]
+            Ru = D[u].argsort()[-N:][::-1]
+            sqrt_Nu = np.sqrt(len(Ru)) + 0.001
+            sqrt_Ru = np.sqrt(len(Nu)) + 0.001
+
+            # error
+            for j in Ru:
+                buj = global_mean + bu[u] + bi[j]
+                second = (K[(u , i)] - buj) * wij[u, i]
+
+            second /= sqrt_Ru
+            third = len(Nu) / sqrt_Nu
+            rhat = bui + second + third
+            err = r -rhat
+            # sgd
+            bu[u] += lr * (err - l4 * bu[u])
+            bi[i] += lr * (err - l4 * bi[i])
+            for j in Ru:
+                buj = global_mean + bu[u] + bi[j]
+                wij[i, j] += lr * (sqrt_Ru * err *  (K[(u , j)] - buj) - l4 * wij[i, j])
+            for j in Nu:
+                cij[i, j] += lr * (sqrt_Nu * err  - l4 * cij[i, j])
