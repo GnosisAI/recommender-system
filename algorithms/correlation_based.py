@@ -48,7 +48,7 @@ class CorrelationBased(BaseEstimator):
                 sijs.append((i, sij))
 
             # get top 10 similaire movies
-            movies_by_sijs = sorted(sijs, key=itemgetter(1), reverse=True)[:10]
+            movies_by_sijs = sorted(sijs, key=itemgetter(1), reverse=True)[:10] # TODO add number of knn
             silimarity_normilzer = np.finfo(float).eps
             silimarity_normilzer += sum(map(itemgetter(1), movies_by_sijs))
             # init estimated rating with baseline estimator estimation
